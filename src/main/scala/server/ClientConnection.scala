@@ -48,7 +48,7 @@ class ClientConnection(socket: Socket) extends Actor {
         }
 
         val body = method match {
-            case Post =>
+            case HasBody =>
                 val bodyBuilder = new StringBuilder
                 var line = readIn.readLine()
                 while (line != null && !line.isEmpty) {
@@ -69,7 +69,7 @@ class ClientConnection(socket: Socket) extends Actor {
         val responseStatus = s"HTTP/1.1 $statusCode"
         val responseHeaders = {
             new Headers(mutable.Map[String, String](
-                "Content-Type" → "text/plaintext; charset=UTF-8",
+                "Content-Type" → "text/html; charset=UTF-8",
                 "Accept-Ranges" → "bytes",
                 "Connection" → "close" // no persistence at this time.
             ))
