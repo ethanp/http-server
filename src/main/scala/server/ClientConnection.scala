@@ -48,7 +48,7 @@ class ClientConnection(socket: Socket) extends Actor {
         }
 
         val body = method match {
-            case HasBody =>
+            case _: HasBody =>
                 val bodyBuilder = new StringBuilder
                 var line = readIn.readLine()
                 while (line != null && !line.isEmpty) {
@@ -139,12 +139,27 @@ case class HtmlElement(
         tagName     : String                = "p",
     var attributes  : Map[String, String]   = Map.empty,
     var text        : String                = "",
-    var children    : List[HtmlElement]     = List.empty
+    var children    : List[HtmlElement]     = List.empty,
+    var indentation : Int = 0
 ) {
-    def addChild(htmlElement: HtmlElement): HtmlElement = { children ::= htmlElement ; this }
+    def indent(i: Int): Unit = {
+        indentation = i
+        children foreach (_.indent(i + 1))
+    }
+
+    def addChild(htmlElement: HtmlElement): HtmlElement = {
+        children ::= htmlElement
+        htmlElement indent indentation + 1
+        this
+    }
     def render: String = {
         val attrString = (attributes foldLeft "") { case (cur, (k, v)) => s"$cur $k=$v" }
         val childrenString = (children foldLeft "") (_ + "\n" + _.render)
-        s"<$tagName$attrString>$text $childrenString</$tagName>"
+        val indentTabs = (0 until indentation).foldLeft("") ((tabs, cnt) => tabs + "\t")
+        val indentedText = text match {
+            case "" => ""
+            case _ => s"\n$indentTabs\t$text"
+        }
+        s"$indentTabs<$tagName$attrString>$indentedText $childrenString\n$indentTabs</$tagName>"
     }
 }
