@@ -42,6 +42,7 @@ class ClientConnection(socket: Socket) extends Actor {
             val headers = new Headers
             while (line != null && !line.isEmpty) {
                 headers.addParsed(line)
+                println(line) // print incoming headers
                 line = readIn.readLine()
             }
             headers
@@ -78,7 +79,7 @@ class ClientConnection(socket: Socket) extends Actor {
         responseHeaders.addPair("Content-Length" → body.length.toString)
         val responseComponents = Seq(responseStatus, responseHeaders.httpString, body)
         val response = responseComponents.mkString("", CRLF, CRLF)
-        println(response)
+//        println(response)
         writeOut.print(response)
 
         // LowPriorityTodo eventually allow persistent connections
@@ -102,7 +103,7 @@ object ClientConnection {
 
 case class Request(method: HTTP.Method, path: String, headers: Headers, body: String) {
 
-    def readFile(file: File): String = {
+    def fileTextAsHtmlString(file: File): String = {
         io.Source.fromFile(file).getLines().map { line =>
             HtmlElement("pre", text = line).render
         }.mkString("\n")
@@ -112,7 +113,7 @@ case class Request(method: HTTP.Method, path: String, headers: Headers, body: St
         println(s"fetching: $path")
         val pathFile = new File(ClientConnection.BASE_LOC, path)
         if (!pathFile.exists()) return "File DNE"
-        if (!pathFile.isDirectory) return readFile(pathFile)
+        if (!pathFile.isDirectory) return fileTextAsHtmlString(pathFile)
         val dirListing = HtmlElement("ul")
         pathFile.listFiles() foreach { f =>
             val li = HtmlElement("li")
@@ -129,6 +130,16 @@ case class Request(method: HTTP.Method, path: String, headers: Headers, body: St
             )
         }
         dirListing.render
+    }
+
+    def httpString: String = {
+        val requestLine = s"${method.name} $path HTTP/1.1"
+        val headersString = headers.httpString
+        val body = method match {
+            case m: HasBody => ???
+            case _ => ""
+        }
+        Seq(requestLine, headersString, body).mkString("\r\n")
     }
 }
 

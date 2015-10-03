@@ -20,3 +20,8 @@ From there you can navigate around.
 ### TODO
 
 1. Send over the favicon.png on requests for `/favicon.ico`...not sure the right format for that.
+2. Add one of those snazzy .prop files that has logging options like
+    1. log request text
+    2. log response text
+    3. log request headers
+    4. log response headers

@@ -10,7 +10,9 @@ object HTTP {
 
     val CRLF = "\r\n"
 
-    sealed trait Method
+    sealed trait Method {
+        def name = getClass.getSimpleName.init.toUpperCase
+    }
     object Method {
         def parse(str: String) = Methods.find(_.getClass.getSimpleName.init.equalsIgnoreCase(str)).get
     }
