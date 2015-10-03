@@ -19,6 +19,4 @@ From there you can navigate around.
 
 ### TODO
 
-1. Render the text files in such a way that the new-lines are preserved. I don't want to change
-   the mime-type bc I want some HTML in there too.... I'm on a plane so I can't google it.
-2. Send over the favicon.png on requests for `/favicon.ico`...not sure the right format for that.
+1. Send over the favicon.png on requests for `/favicon.ico`...not sure the right format for that.
