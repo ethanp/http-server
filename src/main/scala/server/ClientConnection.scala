@@ -1,9 +1,9 @@
 package server
 
-import java.io.{File, PrintStream, InputStreamReader, BufferedReader}
+import java.io.{File, PrintStream}
 import java.net.Socket
 
-import akka.actor.{Props, Actor}
+import akka.actor.{Actor, Props}
 import server.HTTP._
 
 import scala.collection.mutable
@@ -14,52 +14,26 @@ import scala.collection.mutable
  */
 class ClientConnection(socket: Socket) extends Actor {
     override def receive = { case x => println(s"received something?: $x") }
-    val readIn = new BufferedReader(new InputStreamReader(socket.getInputStream))
+    val readIn = io.Source.fromInputStream(socket.getInputStream).getLines()
     val writeOut = new PrintStream(socket.getOutputStream)
     def readRequest(): Option[Request] = {
         println("reading request")
-
-        val (method, path) = {
-            val requestLine = readIn.readLine()
-            if (requestLine == null) {
-                context.stop(self)
-                return None
-            }
-            val firstWord = requestLine.takeWhile(_ != ' ')
-            val method = Method.parse(firstWord)
-            // \s is whitespace, \S is non-whitespace
-            val pathPattern = """^\S+\s+(\S+)""".r
-            val parsedPath: String = pathPattern
-                .findFirstMatchIn(requestLine)
-                .map(_.group(1))
-                .getOrElse("/")
-
-            method → parsedPath
+        val requestLine = readIn.next()
+        if (requestLine == null) {
+            context.stop(self)
+            return None
         }
 
-        val headers = {
-            var line = readIn.readLine()
-            val headers = new Headers
-            while (line != null && !line.isEmpty) {
-                headers.addParsed(line)
-                println(line) // print incoming headers
-                line = readIn.readLine()
-            }
-            headers
-        }
+        // \s is whitespace, \S is non-whitespace
+        val pattern = """^(\S+)\s+(\S+)\s+(\S+)""".r
+        val first :: path :: _ = (pattern findFirstMatchIn requestLine).get.subgroups
+        val method = Method.parse(first)
 
-        val body = method match {
-            case _: HasBody =>
-                val bodyBuilder = new StringBuilder
-                var line = readIn.readLine()
-                while (line != null && !line.isEmpty) {
-                    bodyBuilder.append(s"$line\n")
-                    line = readIn.readLine()
-                }
-                bodyBuilder.toString()
-            case _ => ""
-        }
+        val headers = new Headers
 
+        readIn takeWhile (_ != "") foreach headers.parseAndAdd
+
+        val body = (readIn foldLeft "")(_+_)
         Some(Request(method, path, headers, body))
     }
 

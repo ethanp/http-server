@@ -32,7 +32,8 @@ object HTTP {
             headers(pair._1) = pair._2
         }
 
-        def addParsed(line: String): Unit = {
+        def parseAndAdd(line: String): Unit = {
+            println(line)
             val firstColonIdx = line.indexOf(':')
             val headerKey = (line take firstColonIdx).trim
             val headerVal = (line drop firstColonIdx+1).trim
