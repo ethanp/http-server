@@ -26,9 +26,9 @@ case class HtmlElement(
     }
 
     def render: String = {
-        val attrString = (attributes foldLeft "") { case (cur, (k, v)) => s"$cur $k=$v" }
-        val childrenString = (children foldLeft "") (_ + "\n" + _.render)
-        val indentTabs = (0 until indentation).foldLeft("") ((tabs, cnt) => tabs + "\t")
+        val attrString = attributes map { case (k,v) => "$k=$v" } mkString " "
+        val childrenString = children map (_.render) mkString "\n"
+        val indentTabs = "\t" * indentation
         val indentedText = text match {
             case "" => ""
             case _ => s"\n$indentTabs\t$text"
